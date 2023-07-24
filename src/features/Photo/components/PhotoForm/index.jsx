@@ -1,16 +1,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import './styles.scss';
+import { Spinner } from 'reactstrap';
 // import { PHOTO_CATEGORY_OPTIONS } from '../../../../constants/global';
 // import Images from '../../../../constants/images';
 import InputField from 'custom-fields/InputField';
 import SelectField from 'custom-fields/SelectField';
 import RandomPhotoField from 'custom-fields/RandomPhotoField';
-import Select from 'react-select';
-import { Input, Button, FormGroup, Label } from 'reactstrap';
+import { Button, FormGroup } from 'reactstrap';
 import { PHOTO_CATEGORY_OPTIONS } from 'constants/global';
-import Images from 'constants/images';
 import { Formik, Form, FastField } from 'formik';
+import * as Yup from 'yup';
 
 PhotoForm.propTypes = {
   onSubmit: PropTypes.func
@@ -21,59 +21,73 @@ PhotoForm.defaultProps = {
 }
 
 function PhotoForm(props) {
-  const initialValues = {
-    title: '',
-    categoryId: null
-  }
+
+  const { initialValues, isAddMode } = props;
+
+  const validationSchema = Yup.object().shape({
+    title: Yup.string().required('This field is required.'),
+    categoryId: Yup.number()
+      .required('This field is required.'),
+    photo: Yup.string().required('This field is required.'),
+
+    // photo: Yup.string().when('categoryId', {
+    //   is: 1, // neu chon categoryId = 1
+    //   then: Yup.string().required('This field is required.'),
+    //   otherwise: Yup.string().notRequired(), // nguoc lai thi khong required
+    // })
+  });
+
   return (
-    <>
-      <h3>Photo Form</h3>
+    <Formik
+      initialValues={initialValues}
+      validationSchema={validationSchema}
+      onSubmit={props.onSubmit}
+    >
+      {
+        formikPorps => {
+          // do something here
+          const { values, errors, touched, isSubmitting } = formikPorps;
+          console.log({ values, errors, touched });
 
-      <Formik
-        initialValues={initialValues}
-        onSubmit={values => console.log('Submit: ', values)}
-      >
-        {
-          formikPorps => {
-            // do something here
-            const { values, errors, touched } = formikPorps;
-            console.log({ values, errors, touched });
+          return (
+            <Form>
+              <FastField
+                name="title"
+                component={InputField}
 
-            return (
-              <Form>
+                label="Title"
+                placeholder="Eg: Wow nature ..."
+              />
 
-                <FastField
-                  name="title"
-                  component={InputField}
+              <FastField
+                name="categoryId"
+                component={SelectField}
 
-                  label="Title"
-                  placeholder="Eg: Wow nature ..."
-                />
+                label="Category"
+                placeholder="What's your photo category?"
+                options={PHOTO_CATEGORY_OPTIONS}
+              />
 
-                <FastField
-                  name="categoryId"
-                  component={SelectField}
+              <FastField
+                name="photo"
+                component={RandomPhotoField}
+                label="Photo"
+              />
 
-                  label="Category"
-                  placeholder="What's your photo category?"
-                  options={PHOTO_CATEGORY_OPTIONS}
-                />
-
-                <FastField
-                  name="photo"
-                  component={RandomPhotoField}
-                  label="Photo"
-                />
-
-                <FormGroup>
-                  <Button type="submit" color="primary">Add to album</Button>
-                </FormGroup>
-              </Form>
-            );
-          }
+              <FormGroup>
+                <Button
+                  type="submit"
+                  color={isAddMode ? 'primary' : 'success'}
+                >
+                  {isSubmitting && <Spinner size="sm" />}
+                  {isAddMode ? `Add to album` : `Update your photo`}
+                </Button>
+              </FormGroup>
+            </Form>
+          );
         }
-      </Formik>
-    </>
+      }
+    </Formik>
   );
 }
 
